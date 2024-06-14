@@ -16,7 +16,7 @@ const openai = new OpenAI({
 
 app.post("/find-complexity", async (req, res) => {
   try {
-    const response = await openai.completions.create({
+    const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         { "role": "user", "content": "Who won the world series in 2020?" },
@@ -27,7 +27,17 @@ app.post("/find-complexity", async (req, res) => {
       data: response.choices[0].message.content
     });
   } catch (error) {
-    console.error(error);
+    if (error.response) {
+      console.error('Error status:', error.response.status);
+      console.error('Error data:', error.response.data);
+      if (error.response.status === 429) {
+        return res.status(429).json({
+          success: false,
+          message: 'Rate limit exceeded, please try again later',
+        });
+      }
+    }
+    console.error(error.message);
     return res.status(500).json({
       success: false,
       message: 'Something went wrong',
